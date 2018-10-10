@@ -8,7 +8,8 @@ Please make all changes in the development branch.  We will merge the developmen
 
 To work on files locally:
 
-`git clone /path/to/repository`
+`git clone https://github.com/c1arissa/c-project.git`
+
 `cd c-project`
 
 Change working branch on your local machine to development:
