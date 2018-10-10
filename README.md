@@ -22,7 +22,7 @@ To list all branches and check your current working branch:
 
 Pull frequently to update your local repository to the newest commit:
 
-`git pull`
+`git pull origin development`
 
 Check the status of the current branch:
 
