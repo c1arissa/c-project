@@ -6,7 +6,8 @@ GTESTMAIN=gtest_main.a
 CPP11=-std=c++11
 COMPILE_FOR_DEBUG=-Og -g
 LIBRARIES= \
-/usr/lib64/libboost_system-mt.so.1.53.0
+/usr/lib64/libboost_system-mt.so.1.53.0 \
+-lpthread
 
 CPPFLAGSWITHGTEST=$(CPP11) $(COMPILE_FOR_DEBUG) -I$(GTESTDIRECTORY)/include $(GTESTDIRECTORY)/make/$(GTESTMAIN)
 

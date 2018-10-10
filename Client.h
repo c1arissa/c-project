@@ -1,7 +1,10 @@
+#ifndef INCLUDED_CLIENT
+#define INCLUDED_CLIENT
+
 #include <iostream>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
-#include "order.h"
+#include <order.h>
 #include <cstdlib>
 using boost::asio::ip::tcp;
 
@@ -15,8 +18,8 @@ class Client {
 public:
     Client(const std::string& host, const std::string& port, const std::string& clientID);
 
-    void connect();
-        // Connects to the server
+    int connect();
+        // Connects to the server.  Have function return error codes.
 
     void sendNewOrder( tcp::socket& socket, const Order& order );
         // Send data to server once connection is established.
@@ -32,7 +35,7 @@ Client::Client(const std::string& host, const std::string& port, const std::stri
 {
 }
 
-void Client::connect() {
+int Client::connect() {
     
     boost::asio::io_service io_service;
     tcp::resolver resolver(io_service);
@@ -85,3 +88,5 @@ void Client::sendNewOrder( tcp::socket& socket, const Order& order ) {
     //TASK change the protocol to FIX
     boost::asio::write(socket, boost::asio::buffer("NEW_ORDER" + newOrder.serialise()), ignored_error);
 }
+
+#endif
