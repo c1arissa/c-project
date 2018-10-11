@@ -6,10 +6,10 @@
 #include <boost/asio.hpp>
 #include <string>
 #include <sstream>
-#include <order.h>
+#include <Order.h>
 #include <cstdlib>
-using boost::asio::ip::tcp;
 
+using boost::asio::ip::tcp;
 
 class TCPClient 
 {
@@ -23,7 +23,8 @@ class TCPClient
 public:
     TCPClient(const std::string& server, const std::string& port, 
               const std::string& clientID, boost::asio::io_service& io);
-        // Driver program must provide the name of the server (hostname), a port
+        // Construct client TCP application and create a client socket.  Driver
+        // program must provide the name of the server (hostname), a port
         // number, a client ID, and an io_service object.
     
     void connect();
@@ -37,6 +38,12 @@ public:
 
     void clientMessageWriter(const std::string& message) const;
         // Sends the server a custom message.
+    
+    boost::array<char, 128> clientMessageReader();
+
+    void teardown();
+
+    void reportErrorMessage();
 };
 
 inline
@@ -49,15 +56,19 @@ TCPClient::TCPClient(const std::string& server, const std::string& port,
     , d_resolver( io )
     , d_orderID( 0 )
 {
+    // Creates socket and resolves server name.
 }
 
-inline std::string genOrderID() {
+inline std::string TCPClient::genOrderID() {
     std::ostringstream ostream;
     ostream << ++d_orderID;
     return ostream.str();
 }
 
 void TCPClient::clientMessageWriter(const std::string& message) const {
+    boost::array<char, 128> buf;
+    std::copy(message.begin(), message.end(), buf.begin());
+    
     // TASK WAS TO ADD ERROR CHECKING.  Checking is added.  Just need to lookup
     // some of the error codes to throw etc.
     boost::system::error_code error;
@@ -65,51 +76,33 @@ void TCPClient::clientMessageWriter(const std::string& message) const {
 }
 
 void TCPClient::connect() {
-    // io_service object provides access to I/O functionality.
-    //boost::asio::io_service io_service;
-    // Turn the server name into a TCP endpoint.
-    //tcp::resolver resolver(io_service);
-    
-    // Turn query into a list of endpoints using the name of
-    // the server specified in c'tor.
-    tcp::resolver::query query( d_server, d_port );
-    // Return list of endpoints as an iterator.
-    tcp::resolver::iterator endpoint_iterator = d_resolver.resolve(query);
+    //tcp::resolver resolver(io_service); // Turn the server name into a TCP endpoint.
 
-    // Create and connect the socket to the list of endpoints.
+    // Return list of TCP endpoints as an iterator.
+    tcp::resolver::query query( d_server, d_port );
+    tcp::resolver::iterator endpoint_iterator = d_resolver.resolve( query );
+
+    // Connect the socket to the list of tcp endpoints.
     //tcp::socket socket(io_service);
-    std::cout<< "Connecting to server: " << d_server << ":" << d_port<< "\n";
+    std::cout<< "[CLIENT] Connecting to server: " << d_server << ":" << d_port<< "\n";
     boost::asio::connect(d_socket, endpoint_iterator);
 
-    // The connection is open.      
-    std::cout<< "Logging in\n";
-    clientMessageWriter("HELLO_I_AM " + d_clientID);
-
-    //message = "HELLO_I_AM " + d_clientID;
-    //boost::system::error_code ignored_error; //TASK don't ignore errors
-    //boost::asio::write(socket, boost::asio::buffer(message), error);
-
-    // CALL SEND NEW ORDER FROM CLIENT DRIVER PROGRAM IN MAIN()
-    //sendNewOrder(socket);
-    
-    std::cout<<"Logging out\n";
-    clientMessageWriter("QUIT");
-
-    // THIS LOOP READS A RESPONSE FROM THE SERVER.  NOT SURE IF WE NEED IT YET
-    // OR WHERE, BUT JUST KEEP FOR NOW PLEASE!.
-    /*
     boost::system::error_code error;
-    while (error != boost::asio::error::eof) {
-        // Use a char boost::array to hold the received data.
-        boost::array<char, 128> buf;
+    if (!error) {
+        // Established connection successfully.
+        std::cout<< "[CLIENT] Connected.\n"
+            << "[CLIENT] Logging in as " << d_clientID << " ...\n";
         
-        // read_some() exits with boost::asio::error::eof when the
-        // server closes the connection.
-        size_t bufLen = socket.read_some(boost::asio::buffer(buf), error);
-        
-        std::cout.write(buf.data(), bufLen);
-    }*/
+        // Send a custom greeting to the server.
+        clientMessageWriter("HELLO_I_AM " + d_clientID);
+    } 
+    else {
+        // An error occured. Not connected.
+        std::cerr << error.message() << "\n";
+    }
 
+   
+    
     /** WHILE LOOP INSTEAD OF INFINITE FOR + BREAK **
     for (;;) {
         boost::array<char, 128> buf;
@@ -123,34 +116,39 @@ void TCPClient::connect() {
             throw boost::system::system_error(error); // Other error.
         std::cout.write(buf.data(), bufLen);
     } */
-    
-        
-    //message = "QUIT ";
-    //boost::system::error_code ignored_error;
-    //boost::asio::write(socket, boost::asio::buffer(message), ignored_error);
 }
 
-void TCPClient::sendNewOrder( const Order& order ) { 
+boost::array<char, 128> TCPClient::clientMessageReader() {
+    // Reads a response from the server.
+    boost::system::error_code error;
     
-    // NEED TO ASK SEAN: Automate client to send messages
-    // ?????????????????????????
-	std::cout<<"sleep 5\n";
-	sleep(5);
-	for (int i = 0; i < (10+rand() % 100); ++i) { 
-	    //TASK have the server respond to the client with fill messages
-		sleep(10); //TASK make random between 0.1s and 3s
-	}
-    
-    boost::system::error_code ignored_error;
-    // int instIndex=orderId%2;
-    // Order newOrder( { instruments[instIndex], Order::Buy, sizes[instIndex], benchmarkPrices[instIndex]} ); //TODO make the numbers random
-    
-    // Dumps Order object.
-    std::cout<<"Sending order "<< genOrderID() << " " << order.toString() << "\n";
+    while (error != boost::asio::error::eof) {
+        // Use a char boost::array to hold the received data.
+        boost::array<char, 128> buf;
+        
+        // read_some() exits with boost::asio::error::eof when the
+        // server closes the connection.
+        size_t bufLen = d_socket.read_some(boost::asio::buffer(buf), error);
+        
+        std::cout.write(buf.data(), bufLen);
+    }
+}
 
-    //TASK change the protocol to include the order id (YES DONE!!!!!!!!!!!!)
-    //TASK change the protocol to FIX  (YESSSSSSSSSSSSSSSSSS)
-    boost::asio::write(socket, boost::asio::buffer("NEW_ORDER" + order.serialise()), ignored_error);
+
+void TCPClient::teardown() {
+    std::cout<< "Logging out\n";
+    clientMessageWriter("QUIT");
+}
+
+void TCPClient::sendNewOrder( const Order& order ) {    
+    boost::system::error_code error;
+        
+    // Dumps the new Order object for logging/debugging.
+    std::cout<< "[CLIENT] Sending order " << genOrderID() << " " << order.toString() << "\n";
+
+    //[DONE] TASK change the protocol to include the order id     
+    //[DONE] TASK change the protocol to FIX
+    boost::asio::write(d_socket, boost::asio::buffer("NEW_ORDER" + order.serialise()), error);
 }
 
 #endif
