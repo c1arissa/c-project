@@ -4,18 +4,126 @@
 #include <ctime>
 #include <iostream>
 #include <string>
-#include <memory>
-#include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/enabled_shared_from_this.hpp>
+//#include <memory>
+//#include <boost/bind.hpp>
+//#include <boost/shared_ptr.hpp>
+//#include <boost/enabled_shared_from_this.hpp>
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
 #include <thread>
+#include <vector>
 #include <connectionhandler.h>
 
 using boost::asio::ip::tcp;
 
-class TcpConnection : public std::make_shared<TcpConnection> {
+class TCPServer 
+{
+    std::string   d_host;
+    std::string   d_port;
+    tcp::socket   d_socket;
+    tcp::acceptor d_acceptor;
+    int           d_clientNum;
+
+public:
+    TCPServer(boost::asio::io_service& io_service, const std::string& host, const std::string& port);
+        // Create a TCPServer object and begin listening for incoming client
+        // connections using the host and port passed in to the c'tor.
+
+    void acceptConnection();
+        // Accepts incoming connections and adds session to a thread handler vector.
+
+    void handleConnection();
+        // Handles active threads.
+
+    void sendResponse(const std::string& message);
+    
+    std::string make_daytime_string();
+
+};
+
+inline
+TCPServer::TCPServer(boost::asio::io_service& io_service, const std::string& host, 
+                     const std::string& port)
+  : d_host( host )
+  , d_port( port )
+  , d_socket( io_service )
+  , d_acceptor( io_service, tcp::endpoint(tcp::v4(), 3000) )
+  , d_clientNum( 0 )
+{
+    std::cout << "[SERVER] Started server listening on localhost:3000\n"; 
+}
+
+//try{  //boost::asio::io_service io_service; //TASK make 3000 dynamic
+		//tcp::acceptor acceptor(io_service, tcp::endpoint(tcp::v4(), 3000));
+		//int clientNum=0;
+
+void TCPServer::acceptConnection() {
+    try {
+        std::vector<std::thread>connectionHandlerThreads;
+        
+        for (;;) {
+            // tcp::socket sock(io_service);
+            d_acceptor.accept(d_socket);
+            std::cout << "[SERVER] Client " << ++d_clientNum << " connected " << d_socket.local_endpoint() << " " << d_socket.remote_endpoint() << "\n";
+            connectionHandlerThreads.push_back(std::thread(handleConnection(), std::move(d_socket)));
+        }
+    }
+    catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
+}
+
+//void handleConnection(std::shared_ptr<tcp::socket>& socket) {
+void TCPServer::handleConnection() {
+    
+    ConnectionHandler handler;
+    handler.start();
+    
+    for (;;) {
+        
+        boost::array<char, 128> buf;
+		boost::system::error_code error;
+		
+		size_t len = d_socket.read_some(boost::asio::buffer(buf), error);
+		
+		if (error == boost::asio::error::eof) {
+		    std::cout << "[SERVER] Connection closed cleanly by peer." << std::endl;
+			break; // Connection closed cleanly by peer.
+		}
+		else if (error)
+		    throw boost::system::system_error(error); // Some other error.
+
+		handler.queueMessage( buf.data(), len);
+
+		if ( handler.quitReceived() ) {
+			break;
+		}
+	}
+	handler.join();
+	
+	std::string message = make_daytime_string();
+	sendResponse(message);
+	//	boost::system::error_code ignored_error;
+	//	boost::asio::write(*socket, boost::asio::buffer(message), ignored_error);
+	//	sleep(10);
+	//	boost::asio::write(*socket, boost::asio::buffer(message), ignored_error);
+}
+
+void TCPServer::sendResponse(const std::string& message) {
+    boost::system::error_code ignored_error;
+    boost::asio::write(d_socket, boost::asio::buffer(message), ignored_error);
+    sleep(10);
+    boost::asio::write(d_socket, boost::asio::buffer(message), ignored_error);
+}
+
+inline std::string TCPServer::make_daytime_string(){
+    std::time_t now = std::time(0);
+    return std::ctime(&now);
+}
+
+
+
+/*class TcpConnection : public std::make_shared<TcpConnection> {
     tcp::socket d_socket;
     std::string d_message;
 
@@ -24,7 +132,6 @@ public:
         : d_socket( io_service )
     
     }
-
     void handle_write(const boost::system::error_code& error, size_t bytes_transferred) {}
 
     typedef std::shared_ptr<TcpConnection> pointer;
@@ -33,9 +140,7 @@ public:
         return pointer(new TcpConnection(io_service));
     }
 
-    tcp::socket& socket() {
-        return d_socket;
-    }
+    tcp::socket& socket() { return d_socket; }
 
     void start() {
         d_message = make_string();
@@ -45,9 +150,7 @@ public:
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));
     }
-};
-
-    
+}; 
     TCPServer(boost::asio::io_service& io_service)
         : d_acceptor(io_service, tcp::endpoint(tcp::v4(), 13))
     {
@@ -58,20 +161,7 @@ public:
 
 class TCPServer
 {
-    std::string   d_host;
-    std::string   d_port;
-    tcp::acceptor d_acceptor;
-    tcp::socket   d_socket;
-    std::string   d_message;
-    std::string   d_status;
-
 public:
-    TCPServer(const std::string& host, const std::string& port, boost::asio::io_service& io_service)
-        : d_socket( io_service )
-        , d_acceptor( io_service, tcp::endpoint( tcp::v4(), d_port) );
-
-    {
-    }
     void fillOrder;
 
 public:
@@ -133,5 +223,5 @@ inline const std::string ServerSocket::make_string() {
     std::time_t now = std::time(0);
     return std::ctime(&now);
 }
-
+*/
 #endif

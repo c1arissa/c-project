@@ -13,17 +13,16 @@ using boost::asio::ip::tcp;
 
 class TCPClient 
 {
-    boost::asio::io_service d_io_service;
     std::string   d_server;
     std::string   d_port;
     std::string   d_clientID;
     tcp::socket   d_socket;
-    //tcp::resolver d_resolver;
+    tcp::resolver d_resolver;
     int           d_orderID;
 
 public:
-    TCPClient(const std::string& server, const std::string& port, 
-              const std::string& clientID);
+    TCPClient(boost::asio::io_service& io_service, const std::string& server, 
+              const std::string& port, const std::string& clientID);
         // Construct client TCP application and create a client socket.  Driver
         // program must provide the name of the server (hostname), a port
         // number, a client ID, and an io_service object.
@@ -31,31 +30,30 @@ public:
     void connectToServer();
         // Connects to the server
     
-    void receiveData();
+    //void receiveData();
+    
+    void sendMessage(const std::string& message);
+        // Sends the server a custom message.
     
     void sendNewOrder( const Order& order );
         // Sends an Order to the server once connection is established
     
     std::string genOrderID();
         // (One of the tasks was to generate orderID's automatically)
-
-    void sendMessage(const std::string& message) const;
-        // Sends the server a custom message.
     
     //void teardown();
 };
 
 inline
-TCPClient::TCPClient(const std::string& server, const std::string& port, 
-                     const std::string& clientID)
-    : d_server( server )
-    , d_port( port )
-    , d_clientID( clientID )
-    , d_socket( d_io_service )
-    //, d_resolver( io )
-    , d_orderID( 0 )
-{
-    // Creates socket and resolves server name.
+TCPClient::TCPClient(boost::asio::io_service& io_service, const std::string& server,
+                     const std::string& port, const std::string& clientID)
+  : d_server( server )
+  , d_port( port )
+  , d_clientID( clientID )
+  , d_socket( io_service )
+  , d_resolver( io_service )
+  , d_orderID( 0 )
+{ // Creates socket and resolves server name.
 }
 
 inline std::string TCPClient::genOrderID() {
@@ -76,7 +74,7 @@ inline std::string TCPClient::genOrderID() {
         else if (error)
             throw boost::system::system_error(error); // Other error.
         std::cout.write(buf.data(), bufLen);
-    } */
+    } 
 
 void TCPClient::receiveData() {
     // Reads a response from the server.
@@ -93,7 +91,7 @@ void TCPClient::receiveData() {
         std::cout.write(buf.data(), bufLen);
     }
 }
-
+*/
 /*void TCPClient::teardown() {
     std::cout<< "Logging out\n";
     clientMessageWriter("QUIT");

@@ -30,8 +30,11 @@ client: client.cpp Order.o
 TCPClient.o: TCPClient.cpp TCPClient.h
 	g++ -I. $(CPP11) $(COMPILE_FOR_DEBUG) -c $^
 
+TCPServer.o: TCPServer.cpp TCPServer.h connectionhandler.o Order.o orderbook.o
+	g++ -I. $(CPP11) $(COMPILE_FOR_DEBUG) -o $@ TCPServer.cpp Order.o orderbook.o connectionhandler.o $(LIBRARIES) -lpthread
+
 orderbook.t: orderbook.t.cpp orderbook.o
 	g++ -I. $(CPP11) $(CPPFLAGSWITHGTEST) -o $@ orderbook.t.cpp orderbook.o $(LIBRARIES)
 
-testdriver : testdriver.cpp Order.o TCPClient.o
+testdriver : testdriver.cpp Order.o TCPClient.o TCPServer.o
 	g++ -I. $(CPP11) $(COMPILE_FOR_DEBUG) -o $@ $^ $(LIBRARIES) -lpthread
