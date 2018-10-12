@@ -24,7 +24,8 @@ public:
         // Returns entire order as a FIX compatible string.
     
     std::string toString() const;
-        // Dumps the contents of an Order object to a string for debugging and/or logging.
+        // Dumps the contents of an Order object to 
+        // a string for debugging and/or logging.
     
     const std::string& getSymbol() const;
         // Returns a nonmodifiable string reference to the order's symbol.
