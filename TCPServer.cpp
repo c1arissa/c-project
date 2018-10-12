@@ -12,8 +12,8 @@ void TCPServer::acceptConnection() {
                 << d_socket.local_endpoint() << " " << d_socket.remote_endpoint() << "\n";
             
             // Client has access to service.  Transfer current time to client.
-            std::string message = make_daytime_string();
-            sendResponse(message);
+            //std::string message = make_daytime_string();
+            //sendResponse(message);
             //connectionHandlerThreads.push_back(std::thread(&TCPServer::handleConnection, this));
         }
     }
@@ -47,8 +47,8 @@ void TCPServer::handleConnection() {
 	}
 	handler.join();
 	
-	std::string message = make_daytime_string();
-	sendResponse("[SERVER] " + message);
+	//std::string message = make_daytime_string();
+	//sendResponse("[SERVER] " + message);
 }
 
 void TCPServer::sendResponse(const std::string& message) {
@@ -59,6 +59,6 @@ void TCPServer::sendResponse(const std::string& message) {
         std::cout << "[SERVER] Error: " <<  error.message() << std::endl;
         return;
     }
-    sleep(10);
-    boost::asio::write(d_socket, boost::asio::buffer(message), error);
+    //sleep(10);
+    //boost::asio::write(d_socket, boost::asio::buffer(message), error);
 }
