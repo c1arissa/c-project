@@ -54,8 +54,8 @@ int main(int argc, char** argv) {
             int randomIndex = rand() % 4;
             client.sendNewOrder( orders.at(randomIndex) );
             sleep(1);
-            client.receive();
-            sleep(1);
+            //client.receive();
+            //sleep(1);
         }
         client.onExit();
     }

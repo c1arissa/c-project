@@ -45,10 +45,10 @@ void TCPClient::receive() {
         // server closes the connection.
         size_t bufLen = d_socket.read_some(boost::asio::buffer(buf), error);
 
-        if (bufLen > 0) {
-            //std::cout.write(buf.data(), bufLen);
+        //if (bufLen > 0) {
+            std::cout.write(buf.data(), bufLen);
             std::cout << "[SERVER] " << buf.data() << "\n";
-        }
+        //}
     }
 }
 
