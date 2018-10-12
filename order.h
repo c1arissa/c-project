@@ -6,32 +6,14 @@
 #include <sstream>
 #include <stdexcept>
 
-// WHAT'S WRONG HERE???
-// ANSWER: INCORRECT HEADERS FOR THIS FILE
-//#include <thread>
-//#include <deque>
-//#include <string>
-//#include <mutex>
-
-/*namespace Direction {
-enum : char {
-           Buy='B',
-           Sell='S'
-       };
-}*/
-
 class Order 
 {
-    //friend std::istream& operator>>( std::istream& in, Order& order );
-        // Inputs values for the entire Order.
-
 public:
+    
     enum Direction : unsigned char {
         Buy = 'B',
         Sell = 'S',
-    };
-    //enum Direction { Buy, Sell };
-    //enum Direction { Buy = 'B', Sell = 'S', };
+    };  // Give 'Direction' enum an underlying type of unsigned char.
 
     Order() = default;
 
@@ -39,7 +21,7 @@ public:
         // Construct an order and initialize all data members.
 
     std::string serialise() const;
-        // Returns entire order as a FIX protocol-encoded string.
+        // Returns entire order as a FIX compatible string.
     
     std::string toString() const;
         // Dumps the contents of an Order object to a string for debugging and/or logging.
@@ -59,14 +41,6 @@ public:
     friend std::istream& operator>>( std::istream& is, Order::Direction& direction );
     friend std::istream& operator>>( std::istream& in, Order& order );
 
-    /*{
-        char letter;
-        is >> letter;
-        direction = static_cast<Direction>( letter );
-        return is;
-    }*/
-        // Defines overloaded input for enum class Direction.
-
 private:
     std::string d_symbol;
     Direction   d_direction;
@@ -84,24 +58,15 @@ Order::Order( const std::string& symbol, Direction direction, size_t quantity, d
 }
 
 inline std::istream& operator>>( std::istream& is, Order::Direction& direction ) {
-    unsigned char ch;
-    //is >> letter;
-    
-    if ( is >> ch ) {
-        switch ( ch ) {
-            case 'B': // case S:
-                direction = Order::Buy;
-                //direction = Order::Direction::Buy;
-                break;
-            case 'S':
-                direction = Order::Sell;
-                //direction = Order::Direction::Sell;
-                break;
-            default:
-                throw std::runtime_error("Can't read a direction: it must be B or S");
-        }
+    std::string s;
+    if ( is >> s ) {
+        if (s == "B")
+            direction = Order::Buy;
+        else if (s == "S")
+            direction = Order::Sell;
+        else
+            throw std::runtime_error("Can't read a direction: it must be B or S");
     }
-    // direction = static_cast<Order::Direction>( letter );
     return is;
 }
 
