@@ -21,14 +21,17 @@ Order.o: Order.cpp Order.h
 orderbook.o: orderbook.cpp orderbook.h
 	g++ -I. $(CPP11) $(COMPILE_FOR_DEBUG) -c $^
 
-server: server.cpp connectionhandler.o order.o orderbook.o
-	g++ -I. $(CPP11) $(COMPILE_FOR_DEBUG) -o $@ server.cpp order.o orderbook.o connectionhandler.o $(LIBRARIES) -lpthread
+server: server.cpp connectionhandler.o Order.o orderbook.o
+	g++ -I. $(CPP11) $(COMPILE_FOR_DEBUG) -o $@ server.cpp Order.o orderbook.o connectionhandler.o $(LIBRARIES) -lpthread
 
-client: client.cpp order.o
+client: client.cpp Order.o
 	g++ -I. $(CPP11) $(COMPILE_FOR_DEBUG) -o $@ $^ $(LIBRARIES) -lpthread
+
+TCPClient.o: TCPClient.cpp TCPClient.h
+	g++ -I. $(CPP11) $(COMPILE_FOR_DEBUG) -c $^
 
 orderbook.t: orderbook.t.cpp orderbook.o
 	g++ -I. $(CPP11) $(CPPFLAGSWITHGTEST) -o $@ orderbook.t.cpp orderbook.o $(LIBRARIES)
 
-testdriver : testdriver.cpp Order.o
+testdriver : testdriver.cpp Order.o TCPClient.o
 	g++ -I. $(CPP11) $(COMPILE_FOR_DEBUG) -o $@ $^ $(LIBRARIES) -lpthread

@@ -13,19 +13,26 @@
 //#include <string>
 //#include <mutex>
 
-enum class Direction : char {
-    Buy = 'B',
-    Sell = 'S',
-};
+/*namespace Direction {
+enum : char {
+           Buy='B',
+           Sell='S'
+       };
+}*/
 
 class Order 
 {
-    std::string d_symbol;
-    Direction   d_direction;
-    size_t      d_quantity;
-    double      d_limitPrice;
+    //friend std::istream& operator>>( std::istream& in, Order& order );
+        // Inputs values for the entire Order.
 
 public:
+    enum Direction : unsigned char {
+        Buy = 'B',
+        Sell = 'S',
+    };
+    //enum Direction { Buy, Sell };
+    //enum Direction { Buy = 'B', Sell = 'S', };
+
     Order() = default;
 
     Order( const std::string& symbol, Direction direction, size_t quantity, double limitPrice );
@@ -35,7 +42,7 @@ public:
         // Returns entire order as a FIX protocol-encoded string.
     
     std::string toString() const;
-        // Dump an Order object and return it as a string.
+        // Dumps the contents of an Order object to a string for debugging and/or logging.
     
     const std::string& getSymbol() const;
         // Returns a nonmodifiable string reference to the order's symbol.
@@ -49,11 +56,22 @@ public:
     double getPrice() const;
         // Returns the limit price of the order.
     
-    friend std::istream& operator>>( std::istream& in, Direction& direction );
+    friend std::istream& operator>>( std::istream& is, Order::Direction& direction );
+    friend std::istream& operator>>( std::istream& in, Order& order );
+
+    /*{
+        char letter;
+        is >> letter;
+        direction = static_cast<Direction>( letter );
+        return is;
+    }*/
         // Defines overloaded input for enum class Direction.
 
-    friend std::istream& operator>>( std::istream& in, Order& order );
-        // Inputs values for the entire Order.    
+private:
+    std::string d_symbol;
+    Direction   d_direction;
+    size_t      d_quantity;
+    double      d_limitPrice;
 };
 
 inline
@@ -65,42 +83,26 @@ Order::Order( const std::string& symbol, Direction direction, size_t quantity, d
 {
 }
 
-inline std::istream& operator>>( std::istream& is, Direction& direction ) {
-	std::string d;
-	is >> d;
-
-	if ( d == "B" )
-	    direction = Direction::Buy;
-	else if ( d == "S" )
-	    direction = Direction::Sell;
-	else
-	    throw std::runtime_error("Can't read a direction: it must be B or S");
-
-	return is;
-}
-
-inline std::istream& operator>>( std::istream& is, Order& order ) {
-    is >> order.d_symbol;
-    is >> order.d_direction;
-    is >> order.d_quantity;
-    is >> order.d_limitPrice;
+inline std::istream& operator>>( std::istream& is, Order::Direction& direction ) {
+    unsigned char ch;
+    //is >> letter;
+    
+    if ( is >> ch ) {
+        switch ( ch ) {
+            case 'B': // case S:
+                direction = Order::Buy;
+                //direction = Order::Direction::Buy;
+                break;
+            case 'S':
+                direction = Order::Sell;
+                //direction = Order::Direction::Sell;
+                break;
+            default:
+                throw std::runtime_error("Can't read a direction: it must be B or S");
+        }
+    }
+    // direction = static_cast<Order::Direction>( letter );
     return is;
-
-	/*
-	 * OLD CODE BELOW.  LEAVE IT THERE IN CASE NEW CODE GIVES UNEXPECTED
-	 * FUNCTIONALITY
-	 */
-
-	//std::string symbol;
-	//Direction direction;
-	//size_t quantity;
-	//float limitPrice;
-	//is >> symbol;
-	//if ( is.eof() ) return is;
-	//is >> direction;
-	//is >> quantity;
-	//is >> limitPrice;
-	//order = Order(symbol, direction, quantity, limitPrice);
 }
 
 /*
@@ -111,7 +113,7 @@ inline const std::string& Order::getSymbol() const {
     return d_symbol;
 }
 
-inline Direction Order::getDirection() const {
+inline Order::Direction Order::getDirection() const {
     return d_direction;
 }
 
